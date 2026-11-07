@@ -18,7 +18,10 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
   final _dobController = TextEditingController();
 
   DateTime? _selectedDate;
+  String? _selectedGender; // Latihan 3
 
+  bool _isTermsAccepted = false; // Latihan 4
+  bool _showTermsError = false; // Latihan 4
   bool _obscurePassword = true;
   bool _obscureConfirmPassword = true;
   bool _isLoading = false;
@@ -107,6 +110,14 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
     return null;
   }
 
+  // Latihan 3: Validasi Dropdown Jenis Kelamin
+  String? _validateGender(String? value) {
+    if (value == null || value.isEmpty) {
+      return 'Jenis kelamin wajib dipilih';
+    }
+    return null;
+  }
+
   // Latihan 2: Fungsi untuk menampilkan DatePicker
   Future<void> _selectDate(BuildContext context) async {
     final DateTime? picked = await showDatePicker(
@@ -128,38 +139,42 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
 
   // Handler submit form
   void _submitForm() {
-    if (_formKey.currentState!.validate()) {
+  // Latihan 4: Update state error untuk checkbox HANYA JIKA belum dicentang
+  setState(() {
+    _showTermsError = !_isTermsAccepted;
+  });
+
+  if (_formKey.currentState!.validate() && _isTermsAccepted) {
+    setState(() {
+      _isLoading = true;
+    });
+
+    // Simulasi proses registrasi (kode Anda sebelumnya tetap sama)
+    Future.delayed(const Duration(seconds: 2), () {
       setState(() {
-        _isLoading = true;
+        _isLoading = false;
       });
 
-      // Simulasi proses registrasi
-      Future.delayed(const Duration(seconds: 2), () {
-        setState(() {
-          _isLoading = false;
-        });
-
-        // Tampilkan dialog sukses
-        showDialog(
-          context: context,
-          builder: (context) => AlertDialog(
-            title: const Text('Registrasi Berhasil'),
-            content: Text(
-                'Selamat, ${_nameController.text}!\nEmail: ${_emailController.text}'),
-            actions: [
-              TextButton(
-                onPressed: () {
-                  Navigator.pop(context);
-                  _resetForm();
-                },
-                child: const Text('OK'),
-              ),
-            ],
-          ),
-        );
-      });
-    }
+      showDialog(
+        context: context,
+        builder: (context) => AlertDialog(
+          title: const Text('Registrasi Berhasil'),
+          content: Text(
+              'Selamat, ${_nameController.text}!\nEmail: ${_emailController.text}'),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.pop(context);
+                _resetForm();
+              },
+              child: const Text('OK'),
+            ),
+          ],
+        ),
+      );
+    });
   }
+}
 
   // Reset form
   void _resetForm() {
@@ -173,6 +188,9 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
 
     setState(() {
       _selectedDate = null;
+      _selectedGender = null; // Latihan 3
+      _isTermsAccepted = false; // Latihan 4
+      _showTermsError = false; // Latihan 4
     });
   }
 
@@ -264,6 +282,66 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
                       fillColor: Colors.grey[50],
                     ),
                     validator: _validateDob,
+                  ),
+                ),
+
+                // Field Jenis Kelamin (Latihan 3)
+                Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 8.0),
+                  child: DropdownButtonFormField<String>(
+                    decoration: InputDecoration(
+                      labelText: 'Jenis Kelamin',
+                      prefixIcon: const Icon(Icons.people),
+                      border: const OutlineInputBorder(),
+                      filled: true,
+                      fillColor: Colors.grey[50],
+                    ),
+                    value: _selectedGender,
+                    items: const [
+                      DropdownMenuItem(value: 'Laki-laki', child: Text('Laki-laki')),
+                      DropdownMenuItem(value: 'Perempuan', child: Text('Perempuan')),
+                    ],
+                    onChanged: (value) {
+                      // Least privilege: hanya merender ulang jika dropdown diubah
+                      setState(() {
+                        _selectedGender = value;
+                      });
+                    },
+                    validator: _validateGender,
+                  ),
+                ),
+
+                // Checkbox Syarat & Ketentuan (Latihan 4)
+                Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 8.0),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      CheckboxListTile(
+                        title: const Text('Saya setuju dengan Syarat & Ketentuan'),
+                        value: _isTermsAccepted,
+                        onChanged: (value) {
+                          setState(() {
+                            _isTermsAccepted = value ?? false;
+                            if (_isTermsAccepted) {
+                              _showTermsError = false; // Hilangkan error otomatis saat dicentang
+                            }
+                          });
+                        },
+                        controlAffinity: ListTileControlAffinity.leading, // Letakkan kotak di kiri
+                        contentPadding: EdgeInsets.zero, // Hilangkan padding bawaan agar sejajar
+                        activeColor: Colors.deepPurple,
+                      ),
+                      // Pesan error kustom untuk Checkbox
+                      if (_showTermsError)
+                        const Padding(
+                          padding: EdgeInsets.only(left: 12.0),
+                          child: Text(
+                            'Syarat & Ketentuan wajib disetujui',
+                            style: TextStyle(color: Colors.red, fontSize: 12),
+                          ),
+                        ),
+                    ],
                   ),
                 ),
 
