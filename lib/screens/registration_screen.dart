@@ -19,6 +19,10 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
 
   DateTime? _selectedDate;
   String? _selectedGender; // Latihan 3
+  String _passwordStrength = ''; // Latihan 5
+
+  double _passwordStrengthValue = 0.0; // Latihan 5
+  Color _passwordStrengthColor = Colors.transparent; // Latihan 5
 
   bool _isTermsAccepted = false; // Latihan 4
   bool _showTermsError = false; // Latihan 4
@@ -191,6 +195,46 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
       _selectedGender = null; // Latihan 3
       _isTermsAccepted = false; // Latihan 4
       _showTermsError = false; // Latihan 4
+
+      _passwordStrength = ''; // Latihan 5
+      _passwordStrengthValue = 0.0; // Latihan 5
+      _passwordStrengthColor = Colors.transparent; // Latihan 5
+    });
+  }
+
+  // Latihan 5: Logika pengecekan kekuatan password
+  void _checkPasswordStrength(String value) {
+    setState(() {
+      if (value.isEmpty) {
+        _passwordStrength = '';
+        _passwordStrengthValue = 0.0;
+        _passwordStrengthColor = Colors.transparent;
+      } else if (value.length < 8) {
+        _passwordStrength = 'Lemah';
+        _passwordStrengthValue = 0.33;
+        _passwordStrengthColor = Colors.red;
+      } else {
+        // Panjang sudah >= 8 karakter
+        bool hasUppercase = RegExp(r'[A-Z]').hasMatch(value);
+        bool hasLowercase = RegExp(r'[a-z]').hasMatch(value);
+        bool hasDigits = RegExp(r'[0-9]').hasMatch(value);
+        bool hasSymbols = RegExp(r'[!@#\$&*~_.]').hasMatch(value);
+        bool hasLetters = RegExp(r'[a-zA-Z]').hasMatch(value);
+
+        if (hasUppercase && hasLowercase && hasDigits && hasSymbols) {
+          _passwordStrength = 'Kuat';
+          _passwordStrengthValue = 1.0;
+          _passwordStrengthColor = Colors.green;
+        } else if (hasLetters && hasDigits) {
+          _passwordStrength = 'Sedang';
+          _passwordStrengthValue = 0.66;
+          _passwordStrengthColor = Colors.orange;
+        } else {
+          _passwordStrength = 'Lemah';
+          _passwordStrengthValue = 0.33;
+          _passwordStrengthColor = Colors.red;
+        }
+      }
     });
   }
 
@@ -350,15 +394,14 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
                   padding: const EdgeInsets.symmetric(vertical: 8.0),
                   child: TextFormField(
                     controller: _passwordController,
+                    onChanged: _checkPasswordStrength, // Tambahan Latihan 5: Memanggil fungsi saat diketik
                     decoration: InputDecoration(
                       labelText: 'Password',
                       hintText: 'Minimal 8 karakter, huruf kapital, angka',
                       prefixIcon: const Icon(Icons.lock),
                       suffixIcon: IconButton(
                         icon: Icon(
-                          _obscurePassword
-                              ? Icons.visibility_off
-                              : Icons.visibility,
+                          _obscurePassword ? Icons.visibility_off : Icons.visibility,
                         ),
                         onPressed: () {
                           setState(() {
@@ -366,14 +409,45 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
                           });
                         },
                       ),
-                      border: const OutlineInputBorder(),
                       filled: true,
+                      border: const OutlineInputBorder(),
                       fillColor: Colors.grey[50],
                     ),
                     obscureText: _obscurePassword,
                     validator: _validatePassword,
                   ),
                 ),
+
+                // Indikator Kekuatan Password (Latihan 5)
+                if (_passwordStrength.isNotEmpty)
+                  Padding(
+                    padding: const EdgeInsets.only(bottom: 12.0, left: 4.0, right: 4.0),
+                    child: Row(
+                      children: [
+                        Expanded(
+                          child: LinearProgressIndicator(
+                            value: _passwordStrengthValue,
+                            backgroundColor: Colors.grey[300],
+                            color: _passwordStrengthColor,
+                            minHeight: 6,
+                            borderRadius: BorderRadius.circular(10), // Membulatkan ujung bar
+                          ),
+                        ),
+                        const SizedBox(width: 12),
+                        SizedBox(
+                          width: 60, // Fixed width agar bar tidak melompat saat teks berubah
+                          child: Text(
+                            _passwordStrength,
+                            style: TextStyle(
+                              color: _passwordStrengthColor,
+                              fontWeight: FontWeight.bold,
+                              fontSize: 12,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
 
                 // Field Konfirmasi Password
                 Padding(
