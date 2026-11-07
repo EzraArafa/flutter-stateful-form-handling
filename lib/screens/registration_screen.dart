@@ -14,6 +14,10 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
   final _confirmPasswordController = TextEditingController();
+  final _phoneController = TextEditingController();
+  final _dobController = TextEditingController();
+
+  DateTime? _selectedDate;
 
   bool _obscurePassword = true;
   bool _obscureConfirmPassword = true;
@@ -23,6 +27,8 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
   void dispose() {
     _nameController.dispose();
     _emailController.dispose();
+    _phoneController.dispose(); // Tambahan Latihan 1
+    _dobController.dispose(); // Tambahan Latihan 2
     _passwordController.dispose();
     _confirmPasswordController.dispose();
     super.dispose();
@@ -79,6 +85,47 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
     return null;
   }
 
+  // Latihan 1: Validasi nomor telepon
+  String? _validatePhone(String? value) {
+    if (value == null || value.trim().isEmpty) {
+      return 'Nomor telepon wajib diisi';
+    }
+    if (!RegExp(r'^[0-9]+$').hasMatch(value.trim())) {
+      return 'Nomor telepon hanya boleh berisi angka';
+    }
+    if (value.trim().length < 10 || value.trim().length > 13) {
+      return 'Nomor telepon harus antara 10 hingga 13 digit';
+    }
+    return null;
+  }
+
+  // Validasi tanggal lahir
+  String? _validateDob(String? value) {
+    if (value == null || value.trim().isEmpty) {
+      return 'Tanggal lahir wajib diisi';
+    }
+    return null;
+  }
+
+  // Latihan 2: Fungsi untuk menampilkan DatePicker
+  Future<void> _selectDate(BuildContext context) async {
+    final DateTime? picked = await showDatePicker(
+      context: context,
+      initialDate: _selectedDate ?? DateTime.now(),
+      firstDate: DateTime(1900),
+      lastDate: DateTime.now(),
+  );
+
+  if (picked != null && picked != _selectedDate) {
+    // Sesuai prinsip least privilege, setState hanya memperbarui state Latihan 2
+    setState(() {
+      _selectedDate = picked;
+      // Memformat tanggal untuk ditampilkan di TextFormField
+      _dobController.text = "${picked.day}/${picked.month}/${picked.year}";
+    });
+  }
+}
+
   // Handler submit form
   void _submitForm() {
     if (_formKey.currentState!.validate()) {
@@ -119,8 +166,14 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
     _formKey.currentState!.reset();
     _nameController.clear();
     _emailController.clear();
+    _phoneController.clear(); // Tambahan Latihan 1
+    _dobController.clear(); // Tambahan Latihan 2
     _passwordController.clear();
     _confirmPasswordController.clear();
+
+    setState(() {
+      _selectedDate = null;
+    });
   }
 
   @override
@@ -183,6 +236,35 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
                   prefixIcon: Icons.email,
                   keyboardType: TextInputType.emailAddress,
                   validator: _validateEmail,
+                ),
+
+                // Field Nomor Telepon (Latihan 1)
+                CustomTextField(
+                  controller: _phoneController,
+                  label: 'Nomor Telepon',
+                  hint: 'Masukkan nomor telepon (10-13 digit)',
+                  prefixIcon: Icons.phone,
+                  keyboardType: TextInputType.phone,
+                  validator: _validatePhone,
+                ),
+
+                // Field Tanggal Lahir (Latihan 2)
+                Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 8.0),
+                  child: TextFormField(
+                    controller: _dobController,
+                    readOnly: true, // Membuat field tidak bisa diketik manual
+                    onTap: () => _selectDate(context), // Memanggil showDatePicker saat di-tap
+                    decoration: InputDecoration(
+                      labelText: 'Tanggal Lahir',
+                      hintText: 'Pilih tanggal lahir Anda',
+                      prefixIcon: const Icon(Icons.calendar_today),
+                      border: const OutlineInputBorder(),
+                      filled: true,
+                      fillColor: Colors.grey[50],
+                    ),
+                    validator: _validateDob,
+                  ),
                 ),
 
                 // Field Password
